@@ -2,44 +2,36 @@ version: '3.8'
 
 services:
   web:
-    # Берем Dockerfile из каталога app
-    build: ./app
-    # Запускаем тестовый сервер
+    build:
+       context: ./app
+       dockerfile: Dockerfile.prod
     command: gunicorn django_project.wsgi:application --bind 0.0.0.0:8000
-    # куда будут помещены данные из каталога app
-   
-      
-    # Открываем порт 8000 внутри и снаружи
-    ports:
-      "- 8000:8000"
+    # Открываем порт 8000 наружу
+    expose:
+      - 8000
+    # Подключаем статические и медиа файлы
     volumes:
       - static_volume:/home/app/web/static
       - media_volume:/home/app/web/media
-    # Файл содержащий переменные для контейнера
     env_file:
-      - ./.env.dev
-      # Дожидаемся запуска контейнера db
+      - ./.env.prod
+    # Дожидаемся запуска db
     depends_on:
       - db
   db:
-    # Образ и версия базы, которую мы будем использовать
     image: postgres:12.0-alpine
-    # Внешний том(volume) и место где он будет подключен внутри контейнера
     volumes:
       - postgres_volume:/var/lib/postgresql/data/
     env_file:
       - ./.env.prod.db
-    ports:
-      - "5432:5432"
-
   nginx:
     build: ./nginx
+    # Подключаем статические и медиа файлы
     volumes:
       - static_volume:/home/app/web/static
       - media_volume:/home/app/web/media
     ports:
-      - "80:80"
-      - "443:443"
+      - 1337:80
     depends_on:
       - web
 
@@ -47,4 +39,8 @@ volumes:
   postgres_volume:
   static_volume:
   media_volume:
+
+
+
+
 
